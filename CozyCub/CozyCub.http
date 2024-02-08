@@ -1,0 +1,6 @@
+@CozyCub_HostAddress = http://localhost:5236
+
+GET {{CozyCub_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
