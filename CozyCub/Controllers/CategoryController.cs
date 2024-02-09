@@ -8,7 +8,7 @@ namespace CozyCub.Controllers
     [ApiController]
     public class CategoryController : ControllerBase
     {
-        private readonly ICategory
+        private readonly ICa
         // GET: api/<CategoryController>
         [HttpGet]
         public IEnumerable<string> Get()
