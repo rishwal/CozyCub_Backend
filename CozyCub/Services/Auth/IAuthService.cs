@@ -1,6 +1,6 @@
-﻿using CozyCub.Models.User.DTOs;
+﻿using CozyCub.Models.UserModels.DTOs;
 
-namespace CozyCub.Interfaces
+namespace CozyCub.Services.Auth
 {
     public interface IAuthService
     {

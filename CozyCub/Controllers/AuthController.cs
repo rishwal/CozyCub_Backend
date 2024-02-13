@@ -1,25 +1,38 @@
-﻿using CozyCub.Interfaces;
-using CozyCub.Models.User.DTOs;
+﻿using CozyCub.Models.UserModels.DTOs;
+using CozyCub.Services.Auth;
 using Microsoft.AspNetCore.Mvc;
 
-// For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-
 namespace CozyCub.Controllers
-{d
+{
+    /// <summary>
+    /// Controller for handling user authentication operations.
+    /// </summary>
     [Route("api/[controller]")]
     [ApiController]
     public class AuthController : ControllerBase
     {
         private readonly IAuthService _authService;
 
-
+        /// <summary>
+        /// Constructor for AuthController.
+        /// </summary>
+        /// <param name="service">The authentication service.</param>
         public AuthController(IAuthService service)
         {
             _authService = service;
         }
 
-
-        [HttpPost( "Register")]
+        /// <summary>
+        /// Endpoint for user registration.
+        /// </summary>
+        /// <param name="user">User registration data.</param>
+        /// <returns>
+        /// Returns 200 OK with authentication token upon successful registration.
+        /// Returns 400 BadRequest with error message upon failure.
+        /// </returns>
+        [HttpPost("Register")]
+        [ProducesResponseType(typeof(string), 200)]
+        [ProducesResponseType(typeof(string), 400)]
         public async Task<ActionResult<string>> Register([FromBody] UserRegisterDTO user)
         {
             try
@@ -33,25 +46,28 @@ namespace CozyCub.Controllers
             }
         }
 
-
+        /// <summary>
+        /// Endpoint for user login.
+        /// </summary>
+        /// <param name="user">User login credentials.</param>
+        /// <returns>
+        /// Returns 200 OK with authentication token upon successful login.
+        /// Returns 401 Unauthorized with error message upon failure.
+        /// </returns>
         [HttpPost("Login")]
+        [ProducesResponseType(typeof(string), 200)]
+        [ProducesResponseType(typeof(string), 401)]
         public async Task<ActionResult<string>> Login(UserLoginDTO user)
         {
             try
             {
-                var token = _authService.Login(user);
+                var token = await _authService.Login(user);
                 return Ok(new { Token = token });
             }
             catch (Exception e)
             {
-                return Unauthorized(new { Mesaage = "Lohin failed.", Error = e.Message });
-
+                return Unauthorized(new { Message = "Login failed.", Error = e.Message });
             }
         }
-
-
-
-
-
     }
 }

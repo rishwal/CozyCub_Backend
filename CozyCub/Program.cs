@@ -1,9 +1,16 @@
 using CozyCub;
-using CozyCub.Interfaces;
 using CozyCub.Mappings;
-using CozyCub.Models.UserModels;
-using CozyCub.Services;
+using CozyCub.Models.Wishlist;
+using CozyCub.Payments.Orders;
+using CozyCub.Services.Auth;
+using CozyCub.Services.CartServices;
+using CozyCub.Services.Category_services;
+using CozyCub.Services.ProductService;
+using CozyCub.Services.UserServices;
+using CozyCub.Services.WishList;
+using CozyCub.Services.WishList_Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 
@@ -22,21 +29,42 @@ builder.Services.AddAutoMapper(typeof(AppMapper));
 //Service for Dependency injection 
 builder.Services.AddScoped<IAuthService, AuthService>();
 
+//User service
+builder.Services.AddScoped<IUserService, UserService>();
+
+//Product Service 
+builder.Services.AddScoped<IProductService, ProductServices>();
+
+//Category
+builder.Services.AddScoped<ICategoryService, CategoryService>();
+
+//Cart
+builder.Services.AddScoped<ICartServices, CartServices>();
+
+//WishList
+builder.Services.AddScoped<IWishListService, WishListService>();
+
+//Order
+builder.Services.AddScoped<IOrderService, OrderService>();
+
+
+
 //Configuring services
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                     .AddJwtBearer(options =>
                     {
                         options.TokenValidationParameters = new TokenValidationParameters
                         {
-                            ValidateIssuer = true,
-                            ValidateAudience = true,
+                            ValidateIssuer = false,
+                            ValidateAudience = false,
                             ValidateLifetime = true,
                             ValidateIssuerSigningKey = true,
                             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:SecretKey"]))
 
                         };
                     });
-
+//Cart as a service
+//builder.Services.AddScoped<ICartServices,CartServices>();
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -54,6 +82,8 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseRouting();
+
+app.UseStaticFiles();
 
 app.UseAuthentication();
 

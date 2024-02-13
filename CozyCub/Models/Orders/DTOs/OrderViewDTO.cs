@@ -1,4 +1,8 @@
-﻿namespace CozyCub.Models.Orders.DTOs
+﻿using CozyCub.Models;
+using CozyCub.Models.UserModels.DTOs;
+using CozyCub.Models.UserModels;
+
+namespace CozyCub.Models.Orders.DTOs
 {
     public class OrderViewDTO
     {
@@ -12,10 +16,13 @@
 
         public DateTime OrderDate { get; set; }
 
-        public byte[] Image { get; set; }
+        public string Image { get; set; }
 
         public string OrderId { get; set; }
 
         public string OrderStatus { get; set; }
-}
+
+ 
+
+    }
 }

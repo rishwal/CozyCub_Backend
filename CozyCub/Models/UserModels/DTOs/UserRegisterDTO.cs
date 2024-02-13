@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace CozyCub.Models.User.DTOs
+namespace CozyCub.Models.UserModels.DTOs
 {
     public class UserRegisterDTO
     {
@@ -15,5 +15,7 @@ namespace CozyCub.Models.User.DTOs
 
         [Required]
         public string Password { get; set;} 
+
+        public string Role { get; set;}
     }
 }

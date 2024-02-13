@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using CozyCub.Models.ProductModels;
+using System.ComponentModel.DataAnnotations;
 
 namespace CozyCub.Models.CartModels
 {
@@ -10,13 +11,13 @@ namespace CozyCub.Models.CartModels
         public int CartId { get; set; }
 
         [Required]
-        public int ProductId { get; set; }]
+        public int ProductId { get; set; }
 
         [Required]
         public int Quantity { get; set; }
 
         public virtual Cart cart { get; set; }
-        public virtual ProductModels 
+        public virtual Product product { get; set; }
           
 
         

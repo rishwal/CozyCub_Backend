@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace CozyCub.Models.Wishlist
+namespace CozyCub.Models.Wishlist.DTOs
 {
     public class WishListDTO
     {

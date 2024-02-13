@@ -18,7 +18,7 @@ namespace CozyCub.Models.ProductModels.DTOs
         public decimal Price { get; set; }
 
         [Required]
-        public byte[] ImageData { get; set; }
+        public string ImageData { get; set; }
 
         [Required]
         public int CategoryId { get; set; }

@@ -8,14 +8,14 @@ namespace CozyCub.Models.Wishlist
     {
         public int Id { get; set; }
 
-        [Required]
-        public int UserId {  get; set; }
+        [Required(ErrorMessage = "User ID is required.")]
+        public int UserId { get; set; }
 
-        [Required]
+        [Required(ErrorMessage = "Product ID is required.")]
         public int ProductId { get; set; }
 
-        public virtual UserModels.User User { get; set; }
-        public virtual Product Products { get; set; }
+        public virtual User User { get; set; }
 
+        public virtual Product Product { get; set; }
     }
 }

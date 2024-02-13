@@ -1,4 +1,5 @@
 ﻿using CozyCub.Models.CartModels;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion.Internal;
 
 namespace CozyCub.Models.Orders.DTOs
 {
@@ -10,9 +11,10 @@ namespace CozyCub.Models.Orders.DTOs
         public string CustomerCity { get; set; }
         public string Address { get; set; }
         public string HomeAddress { get; set; }
+        public string OrderStatus { get; set; }
         public string OrderString { get; set; }
 
         public string TransactionId { get; set; }
-        public List<OutPutCart>
+        public List<OutPutCart> OutPutCarts { get; set; }
     }
 }

@@ -14,11 +14,8 @@ namespace CozyCub.Models.ProductModels.DTOs
         public decimal Price { get; set; }
 
         [Required]
-        [MaxLength(100, ErrorMessage = "Product description should'nt be greater than 100 characters")]
+        [MaxLength(500, ErrorMessage = "Product description should'nt be greater than 500 characters")]
         public string Description { get; set; }
-
-        [Required]
-        public byte[] ImageData { get; set; }
 
         [Required]
         public int CategoryId { get; set; }
