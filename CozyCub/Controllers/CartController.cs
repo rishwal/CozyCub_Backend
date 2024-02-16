@@ -1,4 +1,5 @@
-﻿using CozyCub.Services.CartServices;
+﻿using CozyCub.JWT_Id;
+using CozyCub.Services.CartServices;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -9,22 +10,32 @@ namespace CozyCub.Controllers
     public class CartController : ControllerBase
     {
         private readonly ICartServices _cartServices;
+  
+        private readonly IConfiguration _configuration;
+ 
 
-        public CartController(ICartServices cartServices)
+        public CartController(ICartServices cartServices, IConfiguration configuration)
         {
+            _configuration = configuration;
             _cartServices = cartServices;
+    
         }
 
-        [HttpGet("{userId}")]
+        [HttpGet("GetCartItems")]
         [Authorize]
         [ProducesResponseType(typeof(object), 200)]
         [ProducesResponseType(401)]
         [ProducesResponseType(500)]
-        public async Task<ActionResult> GetCartItems(int userId)
+        public async Task<ActionResult> GetCartItems()
         {
             try
             {
-                return Ok(await _cartServices.GetCartItems(userId));
+                var token = HttpContext.Request.Headers["Authorization"]
+                    .FirstOrDefault();
+                var splitToken = token.Split(' ');
+                var jwtToken = splitToken[1];
+
+                return Ok(await _cartServices.GetCartItems(jwtToken));
             }
             catch (Exception ex)
             {
@@ -36,11 +47,14 @@ namespace CozyCub.Controllers
         [Authorize]
         [ProducesResponseType(200)]
         [ProducesResponseType(500)]
-        public async Task<ActionResult> AddToCart(int userId, int productId)
+        public async Task<ActionResult> AddToCart(int productId)
         {
             try
             {
-               var isok =  await _cartServices.AddToCart(userId, productId);
+                var token = HttpContext.Request.Headers["Authorization"].FirstOrDefault();
+                var splitToken = token.Split(' ');
+                var jwtToken = splitToken[1];
+                var isok = await _cartServices.AddToCart(jwtToken, productId);
                 return Ok(isok);
             }
             catch (Exception ex)
@@ -49,15 +63,18 @@ namespace CozyCub.Controllers
             }
         }
 
-        [HttpPut("add-quantity")]
+        [HttpPut("increment-quantity")]
         [Authorize]
         [ProducesResponseType(200)]
         [ProducesResponseType(500)]
-        public async Task<IActionResult> QuantityAdd(int userId, int productId)
+        public async Task<IActionResult> IncrementQuantity(int productId)
         {
             try
             {
-                await _cartServices.IncreaseQuantity(userId, productId);
+                var token = HttpContext.Request.Headers["Authorization"].FirstOrDefault();
+                var splitToken = token.Split(' ');
+                var jwtToken = splitToken[1];
+                await _cartServices.IncreaseQuantity(jwtToken, productId);
                 return Ok();
             }
             catch (Exception e)
@@ -66,15 +83,18 @@ namespace CozyCub.Controllers
             }
         }
 
-        [HttpPut("min-quantity")]
+        [HttpPut("decrement-quantity")]
         [Authorize]
         [ProducesResponseType(200)]
         [ProducesResponseType(500)]
-        public async Task<IActionResult> QuantityMin(int userId, int productId)
+        public async Task<IActionResult> DecrementQuantity(int productId)
         {
             try
             {
-                await _cartServices.DecreaseQuantity(userId, productId);
+                var token = HttpContext.Request.Headers["Authorization"].FirstOrDefault();
+                var splitToken = token.Split(' ');
+                var jwtToken = splitToken[1];
+                await _cartServices.DecreaseQuantity(jwtToken, productId);
                 return Ok();
             }
             catch (Exception e)
@@ -83,16 +103,19 @@ namespace CozyCub.Controllers
             }
         }
 
-        [HttpDelete("remove-cart-item")]
+        [HttpDelete("remove-item-from-cart")]
         [Authorize]
         [ProducesResponseType(typeof(bool), 200)]
         [ProducesResponseType(500)]
-        public async Task<ActionResult> RemoveCartItem(int userId, int productId)
+        public async Task<ActionResult> RemoveCartItem(int productId)
         {
             try
             {
-                await _cartServices.DeleteFromCart(userId, productId);
-                return Ok(true);
+                var token = HttpContext.Request.Headers["Authorization"].FirstOrDefault();
+                var splitToken = token.Split(' ');
+                var jwtToken = splitToken[1];
+                bool res = await _cartServices.DeleteFromCart(jwtToken, productId);
+                return Ok(res);
             }
             catch (Exception e)
             {

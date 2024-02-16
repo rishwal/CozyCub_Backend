@@ -6,6 +6,9 @@ using CozyCub.Models.Orders.DTOs;
 using CozyCub.Models.CartModels.DTOs;
 using AutoMapper;
 using System.Linq.Expressions;
+using Microsoft.EntityFrameworkCore.Metadata;
+using CozyCub.JWT_Id;
+using Microsoft.Identity.Client;
 
 namespace CozyCub.Payments.Orders
 {
@@ -19,16 +22,22 @@ namespace CozyCub.Payments.Orders
         private readonly ApplicationDbContext _context;
         private readonly IMapper _mapper;
 
+        private readonly string _hostUrl;
+        private readonly IJwtService _jwtService;
+
 
         /// <summary>
         /// Initializes a new instance of the <see cref="OrderService"/> class.
         /// </summary>
         /// <param name="configuration">The application configuration.</param>
         /// <param name="dbContext">The database context.</param>
-        public OrderService(IConfiguration cofn, ApplicationDbContext dbContext)
+        public OrderService(IConfiguration cofn, ApplicationDbContext dbContext, IJwtService jwtService)
         {
             _configuration = cofn;
             _context = dbContext;
+            _hostUrl = _configuration["HostUrl:url"];
+            _jwtService = jwtService;
+
         }
 
         /// <summary>
@@ -36,22 +45,22 @@ namespace CozyCub.Payments.Orders
         /// </summary>
         /// <param name="price">The price of the order.</param>
         /// <returns>The ID of the created order.</returns>
-        public async Task<string> CreateOrder(long price)
+        public Task<string> RazorPayPayment(long price)
         {
             try
             {
                 Dictionary<string, object> input = [];
-                Random random = new Random();
+                Guid transactionid = Guid.NewGuid();
 
-                string TransactionId = random.Next(0, 1000).ToString();
+                string TransactionId = transactionid.ToString();
                 input.Add("Amount", Convert.ToDecimal(price) * 100);
                 input.Add("Currency", "INR");
                 input.Add("Receipt", TransactionId);
 
-                string Key = _configuration["RazorPay:KeyId"];
-                string secret = _configuration["RazorPay:KeySecret"];
+                string? Key = _configuration["RazorPay:KeyId"];
+                string? secret = _configuration["RazorPay:KeySecret"];
 
-                RazorpayClient client = new RazorpayClient(Key, secret);
+                RazorpayClient client = new(Key, secret);
 
                 Razorpay.Api.Order order = client.Order.Create(input);
                 var orderId = order["id"].ToString();
@@ -73,10 +82,17 @@ namespace CozyCub.Payments.Orders
         /// <param name="userId">The ID of the user placing the order.</param>
         /// <param name="orderRequestDTO">The order details.</param>
         /// <returns><c>true</c> if the order was created successfully; otherwise, <c>false</c>.</returns>
-        public async Task<bool> CreateOrder(int userId, OrderRequestDTO orderRequestDTO)
+        public async Task<bool> CreateOrder(string token, OrderRequestDTO orderRequestDTO)
         {
             try
             {
+                int userId = _jwtService.GetUserIdFromToken(token);
+
+                if (userId == 0)
+                {
+                    throw new Exception($"User id not valid with token {token}");
+                }
+
                 if (orderRequestDTO.TransactionId == null && orderRequestDTO.OrderString == null)
                 {
                     return false;
@@ -89,6 +105,7 @@ namespace CozyCub.Payments.Orders
                     CustomerEmail = orderRequestDTO.CustomerEmail,
                     CustomerName = orderRequestDTO.CustomerName,
                     CustomerPhone = orderRequestDTO.CustomerPhone,
+                    CustomerCity = orderRequestDTO.CustomerCity,
                     Address = orderRequestDTO.Address,
                     OrderStatus = orderRequestDTO.OrderStatus,
                     OrderString = orderRequestDTO.OrderString,
@@ -173,17 +190,23 @@ namespace CozyCub.Payments.Orders
         }
 
 
-        public async Task<List<OrderViewDTO>> GetOrderDetails(int userId)
+        public async Task<List<OrderViewDTO>> GetOrderDetails(string token)
         {
             try
             {
+
+                int userId = _jwtService.GetUserIdFromToken(token);
+
+
+                if (userId == 0) throw new Exception($"User is not valid with token {token}");
+
                 var order = await _context.Orders
                                      .Include(ordr => ordr.OrderItems)
                                      .ThenInclude(oi => oi.Product)
                                      .FirstOrDefaultAsync(p => p.UserId == userId);
 
 
-                if (order != null && order.OrderItems.Any())
+                if (order != null)
                 {
                     var orderdetails = order.OrderItems.Select(oi => new OrderViewDTO
                     {
@@ -202,9 +225,9 @@ namespace CozyCub.Payments.Orders
             }
             catch (Exception ex)
             {
-                await Console.Out.WriteLineAsync(ex.Message);
+                await Console.Out.WriteLineAsync("An exception occured while fetching user cart details" + ex.Message);
                 return new List<OrderViewDTO>();
-                throw;
+
             }
 
 
@@ -247,8 +270,6 @@ namespace CozyCub.Payments.Orders
 
 
                     return orderDetails;
-
-
                 }
 
                 return new AdminOrderOutputDTO();
@@ -256,11 +277,48 @@ namespace CozyCub.Payments.Orders
             }
             catch (Exception ex)
             {
-                await Console.Out.WriteLineAsync(ex.Message);
+                await Console.Out.WriteLineAsync($"An exception occured while retreving the order details wit order Id :{orderId}" + ex.Message);
                 throw;
             }
         }
 
+
+        public async Task<List<AdminOrderOutputDTO>> GetOrderDetailsForAdmin()
+        {
+            try
+            {
+                var orders = await _context.Orders
+                    .Include(o => o.OrderItems)
+                    .ToListAsync();
+
+                if (orders != null)
+                {
+                    var oredrDetails = orders.Select(o => new AdminOrderOutputDTO
+                    {
+                        Id = o.Id,
+                        CustomerName = o.CustomerName,
+                        CustomerPhone = o.CustomerPhone,
+                        CustomerEmail = o.CustomerEmail,
+                        OrderId = o.OrderId,
+                        OrderDate = o.OrderDate,
+                        CustomerCity = o.CustomerCity,
+                        Address = o.Address,
+                        TransactionId = o.TransactionId,
+                        OrderStatus = o.OrderStatus,
+                    }).ToList();
+
+                    return oredrDetails;
+                }
+
+                return new List<AdminOrderOutputDTO>();
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("An exception occured while retriving the orderDetails for admin: " + ex.Message);
+                throw;
+            }
+        }
 
         public List<OrderDetailDTO> payment(RazorPayDTO razorPayDTO)
         {
@@ -270,14 +328,14 @@ namespace CozyCub.Payments.Orders
             attributes.Add("raz_pay_sig", razorPayDTO.razpaySig);
 
             Utils.verifyPaymentLinkSignature(attributes);
-            List<OrderDetailDTO> orderList = new List<OrderDetailDTO>
-            {
+            List<OrderDetailDTO> orderList =
+            [
                 new OrderDetailDTO
                 {
                     TransactionId = razorPayDTO.razrPayId,
                     OrderId = razorPayDTO.razrOrdId
                 }
-            };
+            ];
 
             return orderList;
         }
@@ -298,14 +356,16 @@ namespace CozyCub.Payments.Orders
                     // Save changes to the database
                     await _context.SaveChangesAsync();
 
-                    return true; // Indicate successful update
+                    return true;
                 }
 
-                return false; // Indicate failure if the order doesn't exist
+                return false;
             }
             catch (Exception ex)
             {
+
                 await Console.Out.WriteLineAsync(ex.Message);
+                return false;
                 throw;
             }
         }

@@ -28,7 +28,8 @@ namespace CozyCub.Controllers
         {
             try
             {
-                return Ok(await _categoryServices.GetAllCategories());
+                List<CategoryDTO> res = await _categoryServices.GetAllCategories();
+                return res == null ? NotFound("Sorry no categories found") : Ok(res);
             }
             catch (Exception ex)
             {
@@ -41,11 +42,14 @@ namespace CozyCub.Controllers
         [ProducesResponseType(typeof(object), 200)]
         [ProducesResponseType(401)]
         [ProducesResponseType(500)]
-        public async Task<ActionResult> GetCategoryById(int id)
+        public async Task<IActionResult> GetCategoryById(int id)
         {
             try
             {
-                return Ok(await _categoryServices.GetCategoryById(id));
+                CategoryDTO res = await _categoryServices.GetCategoryById(id);
+
+                return res != null ? Ok(res) : NotFound($"Sorry no category found with id:{id}");
+
             }
             catch (Exception e)
             {

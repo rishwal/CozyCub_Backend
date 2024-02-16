@@ -1,10 +1,12 @@
 using CozyCub;
+using CozyCub.JWT_Id;
 using CozyCub.Mappings;
 using CozyCub.Models.Wishlist;
 using CozyCub.Payments.Orders;
 using CozyCub.Services.Auth;
 using CozyCub.Services.CartServices;
 using CozyCub.Services.Category_services;
+using CozyCub.Services.JWT_Id;
 using CozyCub.Services.ProductService;
 using CozyCub.Services.UserServices;
 using CozyCub.Services.WishList;
@@ -47,23 +49,44 @@ builder.Services.AddScoped<IWishListService, WishListService>();
 //Order
 builder.Services.AddScoped<IOrderService, OrderService>();
 
+//JWt
+builder.Services.AddScoped<IJwtService, JwtService>();
 
 
-//Configuring services
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-                    .AddJwtBearer(options =>
-                    {
-                        options.TokenValidationParameters = new TokenValidationParameters
-                        {
-                            ValidateIssuer = false,
-                            ValidateAudience = false,
-                            ValidateLifetime = true,
-                            ValidateIssuerSigningKey = true,
-                            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:SecretKey"]))
+//Adding Authentication service for JWT
 
-                        };
-                    });
-//Cart as a service
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+}).AddJwtBearer(o =>
+{
+    o.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidIssuer = builder.Configuration["Jwt:Issuer"],
+        ValidAudience = builder.Configuration["Jwt:Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey
+        (Encoding.UTF8.GetBytes(builder.Configuration["Jwt:SecretKey"])),
+        ValidateIssuer = false,
+        ValidateAudience = false,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true
+    };
+});
+
+//configures CORS (Cross-Origin Resource Sharing) for React 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("ReactPolicy", builder =>
+    {
+        builder.AllowAnyOrigin()
+               .AllowAnyMethod()
+               .AllowAnyHeader();
+    });
+});
+
+
 //builder.Services.AddScoped<ICartServices,CartServices>();
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -85,8 +108,10 @@ app.UseRouting();
 
 app.UseStaticFiles();
 
+//Authentication
 app.UseAuthentication();
 
+//Authorization
 app.UseAuthorization();
 
 app.MapControllers();

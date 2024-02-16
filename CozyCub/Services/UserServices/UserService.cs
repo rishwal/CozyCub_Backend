@@ -14,7 +14,7 @@ namespace CozyCub.Services.UserServices
 
         private readonly IMapper _mapper;
         private readonly ApplicationDbContext _context;
-        private readonly IConfiguration _configuration;
+    
 
 
         /// <summary>
@@ -26,7 +26,6 @@ namespace CozyCub.Services.UserServices
         {
             _context = context;
             _mapper = mappper;
-            _configuration = configuration;
 
         }
 

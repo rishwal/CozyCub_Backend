@@ -19,6 +19,10 @@ namespace CozyCub.Models.CartModels.DTOs
         [DisplayName("Total Price")]
         public decimal TotalPrice { get; set; }
 
+       
+
+
+
         [DisplayName("Quantity")]
         [Range(1, int.MaxValue, ErrorMessage = "Quantity must be a positive number.")]
         public int Quantity { get; set; }

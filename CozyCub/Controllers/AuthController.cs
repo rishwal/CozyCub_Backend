@@ -37,8 +37,8 @@ namespace CozyCub.Controllers
         {
             try
             {
-                var token = await _authService.Register(user);
-                return Ok(new { Token = token });
+                string message = await _authService.Register(user);
+                return Ok(new { Token = message });
             }
             catch (Exception e)
             {

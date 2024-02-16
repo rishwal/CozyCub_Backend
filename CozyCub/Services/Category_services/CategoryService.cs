@@ -36,7 +36,7 @@ namespace CozyCub.Services.Category_services
         public async Task<bool> CreateCategory(CategoryCreateDTO createDTO)
         {
             try
-            { 
+            {
                 var newCategory = _mapper.Map<Category>(createDTO);
                 await _context.Categories.AddAsync(newCategory);
 
@@ -62,7 +62,7 @@ namespace CozyCub.Services.Category_services
         {
             try
             {
-                Category UpdateCategory = await _context.Categories.FirstOrDefaultAsync(c => c.Id == id);
+                Category? UpdateCategory = await _context.Categories.FirstOrDefaultAsync(c => c.Id == id);
 
                 if (UpdateCategory != null)
                 {
@@ -95,7 +95,7 @@ namespace CozyCub.Services.Category_services
         {
             try
             {
-                Category categoryToDelete = await _context.Categories.FirstOrDefaultAsync(c => c.Id == id);
+                Category? categoryToDelete = await _context.Categories.FirstOrDefaultAsync(c => c.Id == id);
 
 
                 if (categoryToDelete != null)
@@ -126,7 +126,8 @@ namespace CozyCub.Services.Category_services
             try
             {
                 var AllCategories = await _context.Categories.ToListAsync();
-                return _mapper.Map<List<CategoryDTO>>(AllCategories);
+                List<CategoryDTO> categories = _mapper.Map<List<CategoryDTO>>(AllCategories);
+                return categories ?? null;
             }
             catch (Exception ex)
             {
@@ -146,7 +147,7 @@ namespace CozyCub.Services.Category_services
             try
             {
                 Category category = await _context.Categories.FirstOrDefaultAsync(c => c.Id == id);
-                return _mapper.Map<CategoryDTO>(category);
+                return _mapper.Map<CategoryDTO>(category) ?? null;
             }
             catch (Exception ex)
             {
@@ -155,6 +156,6 @@ namespace CozyCub.Services.Category_services
             }
         }
 
-        
+
     }
 }

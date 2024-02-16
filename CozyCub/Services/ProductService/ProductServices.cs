@@ -15,6 +15,7 @@ namespace CozyCub.Services.ProductService
         private readonly IConfiguration _configuration;
         private readonly IMapper _mapper;
         private readonly IWebHostEnvironment _webHostEnvironment;
+        private readonly string? _hostUrl;
 
 
         /// <summary>
@@ -30,6 +31,7 @@ namespace CozyCub.Services.ProductService
             _context = context ?? throw new ArgumentNullException(nameof(context));
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
             _webHostEnvironment = environment ?? throw new ArgumentNullException(nameof(environment));
+            _hostUrl = _configuration["HostUrl:url"];
         }
 
 
@@ -38,18 +40,19 @@ namespace CozyCub.Services.ProductService
         /// </summary>
         /// <param name="productDTO">Product data.</param>
         /// <param name="image">Product image file.</param>
-        public async Task AddProduct(CreateProductDTO productDTO, IFormFile image)
+        public async Task CreateProduct(CreateProductDTO productDTO, IFormFile image)
         {
             try
             {
-                string productImage = null;
-               
+                string? productImage = null;
+
 
                 if (image != null && image.Length > 0)
                 {
+
                     string filleName = Guid.NewGuid().ToString() + Path.GetExtension(image.FileName);
 
-
+                    //Getting file Path
                     string filePath = Path.Combine(_webHostEnvironment.WebRootPath, "Images", "Products", filleName);
 
                     using (var stream = new FileStream(filePath, FileMode.Create))
@@ -57,7 +60,7 @@ namespace CozyCub.Services.ProductService
                         await image.CopyToAsync(stream);
                     }
 
-                    productImage =  "/Images/Products/" + filleName;
+                    productImage = "/Images/Products/" + filleName;
 
                 }
                 else
@@ -72,7 +75,7 @@ namespace CozyCub.Services.ProductService
 
 
 
-                _context.Products.AddAsync(product);
+                await _context.Products.AddAsync(product);
                 await _context.SaveChangesAsync();
 
 
@@ -80,7 +83,7 @@ namespace CozyCub.Services.ProductService
             catch (Exception ex)
             {
                 throw new Exception("Error adding product: " + ex.Message);
-                
+
             }
         }
 
@@ -99,7 +102,7 @@ namespace CozyCub.Services.ProductService
             }
             catch (Exception ex)
             {
-                await Console.Out.WriteLineAsync(ex.Message);
+                await Console.Out.WriteLineAsync($"An exception occured while removing product with id {id}" + ex.Message);
                 throw;
             }
         }
@@ -113,23 +116,34 @@ namespace CozyCub.Services.ProductService
         /// <returns>A list of products within the specified category.</returns>
         public async Task<List<ProductOutputDTO>> GetProductByCategory(int categoryId)
         {
-            var products = await _context.Products.Include(p => p.Category).Where(p => p.CategoryId == categoryId).Select(p => new ProductOutputDTO
+            try
             {
-                Id = p.Id,
-                ProductName = p.Name,
-                ProductDescription = p.Description,
-                Price = p.Price,
-                Category = p.Category.Name,
-                ProductImage = p.Image,
+                var products = await _context.Products
+               .Include(p => p.Category)
+               .Where(p => p.CategoryId == categoryId)
+               .Select(p => new ProductOutputDTO
+               {
+                   Id = p.Id,
+                   ProductName = p.Name,
+                   ProductDescription = p.Description,
+                   Price = p.Price,
+                   Category = p.Category.Name,
+                   ProductImage = _hostUrl + p.Image,
 
-            }).ToListAsync();
+               }).ToListAsync();
 
-            if (products != null)
-            {
-                return products;
+                if (products != null)
+                {
+                    return products;
+                }
+
+                return [];
             }
-
-            return new List<ProductOutputDTO>();
+            catch (Exception ex)
+            {
+                await Console.Out.WriteLineAsync($"An exception occured while retrieving products with category id:{categoryId}" + ex.Message);
+                return [];
+            }
         }
 
 
@@ -141,19 +155,19 @@ namespace CozyCub.Services.ProductService
         /// <returns>The product with the specified ID.</returns>
         public async Task<ProductOutputDTO> GetProductById(int id)
         {
-            var prd = await _context.Products.Include(p => p.Category).FirstOrDefaultAsync(p => p.Id == id);
+            var prdt = await _context.Products.Include(p => p.Category).FirstOrDefaultAsync(p => p.Id == id);
 
-            if (prd == null)
+            if (prdt == null)
             {
-                ProductOutputDTO product = new ProductOutputDTO
+                ProductOutputDTO product = new()
                 {
 
-                    Id = prd.Id,
-                    ProductName = prd.Name,
-                    ProductDescription = prd.Description,
-                    Price = prd.Price,
-                    Category = prd.Category.Name,
-                    ProductImage = prd.Image
+                    Id = prdt.Id,
+                    ProductName = prdt.Name,
+                    ProductDescription = prdt.Description,
+                    Price = prdt.Price,
+                    Category = prdt.Category.Name,
+                    ProductImage = prdt.Image
 
                 };
 
@@ -184,12 +198,13 @@ namespace CozyCub.Services.ProductService
                         ProductName = p.Name,
                         ProductDescription = p.Description,
                         Price = p.Price,
+                        OfferPrice = p.OfferPrice,
                         Category = p.Category.Name,
                         ProductImage = p.Image
                     }).ToList();
                     return productWithCategory;
                 }
-                return new List<ProductOutputDTO>();
+                return [];
             }
             catch (Exception ex)
             {

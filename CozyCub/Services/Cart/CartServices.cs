@@ -1,4 +1,5 @@
-﻿using CozyCub.Models.CartModels;
+﻿using CozyCub.JWT_Id;
+using CozyCub.Models.CartModels;
 using CozyCub.Models.CartModels.DTOs;
 using CozyCub.Models.ProductModels;
 using CozyCub.Models.UserModels;
@@ -11,63 +12,121 @@ namespace CozyCub.Services.CartServices
     public class CartServices : ICartServices
     {
         private readonly ApplicationDbContext _context;
+        private readonly string _hostUrl;
+        private readonly IConfiguration _configuration;
+        private readonly IJwtService _jwtservice;
 
-        public CartServices(ApplicationDbContext context)
+        public CartServices(IConfiguration configuration, ApplicationDbContext context, IJwtService jwtservice)
         {
-            _context = context ?? throw new ArgumentNullException(nameof(context));
+            _context = context;
+            _configuration = configuration;
+            _hostUrl = _configuration["HostUrl:url"];
+            _jwtservice = jwtservice;
+
         }
-
-
-        #region Private Methods
 
         /// <summary>
-        /// Retrieves the user with associated cart and cart items.
+        /// Retrieves all product to the user's shopping cart.
         /// </summary>
-        private async Task<User> GetUserWithCart(int userId)
+        public async Task<List<OutputCartDTO>> GetCartItems(string token)
         {
-            return await _context.Users
-                .Include(u => u.Cart)
-                .ThenInclude(c => c.CartItems)
-                .FirstOrDefaultAsync(u => u.Id == userId);
+            try
+            {
+                int userId = _jwtservice.GetUserIdFromToken(token);
+
+
+                if (userId == 0) throw new Exception("User with id doesn't exist !");
+
+                var user = await _context.Cart
+                    .Include(c => c.CartItems)
+                    .ThenInclude(ci => ci.product)
+                    .FirstOrDefaultAsync(p => p.UserId == userId);
+
+
+                if (user != null)
+                {
+                    var cartItems = user.CartItems.Select(ci => new OutputCartDTO
+
+                    {
+                        Id = ci.ProductId,
+                        ProductName = ci.product.Name,
+                        Quantity = ci.Quantity,
+                        Price = ci.product.Price,
+                        TotalPrice = ci.product.Price * ci.Quantity,
+                        Image = _hostUrl + ci.product.Image
+
+                    }).ToList();
+
+                    return cartItems;
+                }
+                return new List<OutputCartDTO>();
+
+            }
+
+            catch (Exception ex)
+            {
+                throw new Exception("Something went wring while fetching cart items : 👉🏼 " + ex.Message);
+            }
         }
 
-        #endregion
 
         /// <summary>
         /// Adds a product to the user's shopping cart.
         /// </summary>
-        public async Task<bool> AddToCart(int userId, int productId)
+        public async Task<bool> AddToCart(string token, int productId)
         {
             try
             {
-                var user = await GetUserWithCart(userId);
-                var product = await _context.Products.FirstOrDefaultAsync(p => p.Id == productId);
+                int userId = _jwtservice.GetUserIdFromToken(token);
 
-                if (user != null && product != null)
+                if (userId == 0) throw new Exception($"User not valid witrh token: {token}");
+
+                var user = await _context.Users
+                    .Include(u => u.Cart)
+                    .ThenInclude(c => c.CartItems)
+                    .FirstOrDefaultAsync(u => u.Id == userId);
+
+                var Product = await _context.Products.FirstOrDefaultAsync(p => p.Id == productId);
+
+                if (Product == null) throw new Exception($"Product with id {productId} not found");
+
+                if (user != null && Product != null)
                 {
-                    // Check if the user has a cart, create one if not
+                    //If user doesnt have a cart (empty cart)
                     if (user.Cart == null)
                     {
-                        user.Cart = new Cart { UserId = userId, CartItems = new List<CartItem>() };
-                        await _context.Cart.AddAsync(user.Cart);
-                        await _context.SaveChangesAsync();
+                        user.Cart = new Cart
+                        {
+                            UserId = userId,
+                            CartItems = new List<CartItem>()
+                        };
+
                     }
 
-                    var existingItem = user.Cart.CartItems.FirstOrDefault(ci => ci.ProductId == productId);
-
-                    if (existingItem != null)
-                    {
-                        existingItem.Quantity++;
-                    }
-                    else
-                    {
-                        var newCartItem = new CartItem { CartId = user.Cart.Id, ProductId = productId, Quantity = 1 };
-                        await _context.CartItems.AddAsync(newCartItem);
-                    }
-
+                    _context.Cart.Add(user.Cart);
                     await _context.SaveChangesAsync();
-                    return true;
                 }
+
+                CartItem? existingCart = user.Cart.CartItems.FirstOrDefault(ci => ci.ProductId == productId);
+
+                if (existingCart != null)
+                {
+                    existingCart.Quantity++;
+                }
+                else
+                {
+                    CartItem cartItem = new CartItem
+                    {
+                        CartId = user.Cart.Id,
+                        ProductId = productId,
+                        Quantity = 1,
+                    };
+
+                    _context.CartItems.Add(cartItem);
+
+                }
+
+                await _context.SaveChangesAsync();
 
                 return false;
             }
@@ -83,15 +142,24 @@ namespace CozyCub.Services.CartServices
         /// <summary>
         /// Removes a product from the user's shopping cart.
         /// </summary>
-        public async Task<bool> DeleteFromCart(int userId, int ProductId)
+        public async Task<bool> DeleteFromCart(string token, int ProductId)
         {
             try
             {
-                var user = await GetUserWithCart(userId);
+                int userId = _jwtservice.GetUserIdFromToken(token);
+                if (userId == 0)
+                {
+                    throw new Exception("User id is not valid !");
+                }
 
-                var Product = await _context.Products.FirstOrDefaultAsync(p => p.Id == ProductId);
+                var user = await _context.Users
+                    .Include(u => u.Cart)
+                    .ThenInclude(u => u.CartItems)
+                    .FirstOrDefaultAsync(c => c.Id == userId);
 
-                if (user != null && Product != null)
+                var product = await _context.Products.FirstOrDefaultAsync(p => p.Id == ProductId);
+
+                if (user != null && product != null)
                 {
                     var item = user.Cart.CartItems.FirstOrDefault(ci => ci.ProductId == ProductId);
 
@@ -99,54 +167,19 @@ namespace CozyCub.Services.CartServices
                     {
                         _context.CartItems.Remove(item);
                         await _context.SaveChangesAsync();
+
                         return true;
                     }
                 }
 
                 return false;
+                throw new Exception($"No User or Product presnt with given id , ProductId:{ProductId} !");
+
             }
             catch (Exception ex)
             {
-                await Console.Out.WriteLineAsync(ex.Message);
-                throw;
-            }
-        }
-
-        /// <summary>
-        /// Retrieves all product to the user's shopping cart.
-        /// </summary>
-        public async Task<List<OutputCartDTO>> GetCartItems(int userId)
-        {
-            try
-            {
-                var user = await GetUserWithCart(userId);
-
-                if (user != null)
-                {
-                    var cartItems = user.Cart.CartItems
-                        .Where(ci => ci.product != null)
-                        .Select(ci => new OutputCartDTO()
-                        {
-                            Id = ci.ProductId,
-                            ProductName = ci.product.Name,
-                            Quantity = ci.product.Qty,
-                            Price = ci.product.Price,
-                            TotalPrice = ci.product.OfferPrice * ci.Quantity,
-                            Image = ci.product.Image
-
-                        }).ToList();
-
-                    return cartItems;
-                }
-                else
-                    return new List<OutputCartDTO>();
-
-            }
-
-            catch (Exception ex)
-            {
-                await Console.Out.WriteLineAsync(ex.Message);
-                throw;
+                return false;
+                throw new Exception("An exception occured while deleting a product from the users cart " + ex.Message);
             }
         }
 
@@ -154,13 +187,23 @@ namespace CozyCub.Services.CartServices
         /// <summary>
         /// Increments the quantity of a product in user's shopping cart.
         /// </summary>
-        public async Task<bool> IncreaseQuantity(int userId, int ProductId)
+        public async Task<bool> IncreaseQuantity(string token, int ProductId)
         {
             try
             {
-                var user = await GetUserWithCart(userId);
+                int userId = _jwtservice.GetUserIdFromToken(token);
+
+                if (userId == 0)
+                    throw new Exception("A user with the current token is not found !");
+
+                var user = await _context.Users
+                    .Include(u => u.Cart)
+                    .ThenInclude(c => c.CartItems)
+                    .FirstOrDefaultAsync(u => u.Id == userId);
+
 
                 var product = await _context.Products.FirstOrDefaultAsync(p => p.Id == ProductId);
+
 
                 if (user != null && product != null)
                 {
@@ -179,21 +222,50 @@ namespace CozyCub.Services.CartServices
             }
             catch (Exception ex)
             {
-                await Console.Out.WriteLineAsync(ex.Message);
-                throw;
+                throw new Exception("An exception occured while increasing the quantity of the product" + ex.Message);
+         
             }
         }
 
         /// <summary>
         /// Decrements the quantity of a product in user's shopping cart.
         /// </summary>
-        public async Task<bool> DecreaseQuantity(int userId, int productId)
+        public async Task<bool> DecreaseQuantity(string token, int productId)
         {
             try
             {
-                var user = await GetUserWithCart(userId);
+                int userId = _jwtservice.GetUserIdFromToken(token);
 
-                var product = await _context.Products.FirstOrDefaultAsync(p => p.Id == productId);
+                if (userId == 0) throw new Exception($"User is not valid with token {token}");
+
+
+                var user = await _context.Users
+                    .Include(u => u.Cart)
+                    .ThenInclude(c => c.CartItems)
+                    .FirstOrDefaultAsync(u => u.Id == userId);
+                var product = await _context.Products.FirstOrDefaultAsync(p=>p.Id==productId);
+
+                if (user != null && product != null)
+                {
+                    var item = user.Cart.CartItems.FirstOrDefault(ci=>ci.ProductId == productId);
+
+                    if(item != null)
+                    {
+                        item.Quantity = item.Quantity >= 1 ? item.Quantity - 1 : item.Quantity;
+
+                        if(item.Quantity == 0)
+                        {
+                            _context.CartItems.Remove(item);
+                            await _context.SaveChangesAsync();
+                        }
+
+                        await _context.SaveChangesAsync();
+                    }
+
+                }
+
+                if(user !=null )
+
 
                 if (user != null && product != null)
                 {

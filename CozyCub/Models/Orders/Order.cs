@@ -41,7 +41,7 @@ namespace CozyCub.Models.Orders
         [Required(ErrorMessage = "Transaction ID is required.")]
         public string TransactionId { get; set; }
 
-
+        public string OrderId { get; set; }
 
 
         // Navigation property to represent the user who placed the order

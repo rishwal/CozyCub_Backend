@@ -10,7 +10,7 @@ namespace CozyCub.Services.ProductService
 
         Task<List<ProductOutputDTO>> ProductPagination(int pageNumber = 1, int pageSize = 10);
 
-        Task AddProduct(CreateProductDTO productDTO, IFormFile image);
+        Task CreateProduct(CreateProductDTO productDTO, IFormFile image);
 
         Task UpdateProduct(int id, CreateProductDTO productDTO, IFormFile image);
 

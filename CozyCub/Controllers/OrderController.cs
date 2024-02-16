@@ -19,7 +19,7 @@ namespace CozyCub.Controllers
             _orderServices = orderServices;
         }
 
-        [HttpPost("order-create")]
+        [HttpPost("razor-payment")]
         [Authorize]
         [ProducesResponseType(typeof(long), 200)]
         [ProducesResponseType(typeof(string), 400)]
@@ -29,11 +29,11 @@ namespace CozyCub.Controllers
         {
             try
             {
-                if (price <= 0)
+                if (price <= 0 || price > 100000 )
                 {
                     return BadRequest("Enter a valid amount!");
                 }
-                var orderId = await _orderServices.CreateOrder(price);
+                var orderId = await _orderServices.RazorPayPayment(price);
                 return Ok(orderId);
             }
             catch (Exception ex)
@@ -79,7 +79,10 @@ namespace CozyCub.Controllers
                 {
                     return BadRequest();
                 }
-                await _orderServices.CreateOrder(userId, orderRequests);
+                var token = HttpContext.Request.Headers["Authorization"].FirstOrDefault();
+                var splitToken = token.Split(' ');
+                var jwtToken = splitToken[1];
+                await _orderServices.CreateOrder(jwtToken, orderRequests);
                 return Ok();
             }
             catch (Exception e)
@@ -88,13 +91,13 @@ namespace CozyCub.Controllers
             }
         }
 
-        [HttpGet("get_order_details")]
+        [HttpGet("get-order-details-as-admin")]
         [Authorize(Roles = "admin")]
         [ProducesResponseType(typeof(object), 200)]
         [ProducesResponseType(400)]
         [ProducesResponseType(401)]
         [ProducesResponseType(500)]
-        public async Task<ActionResult> GetOrderDetails(int userId)
+        public async Task<ActionResult> GetOrderDetailsAsAdmin(int userId)
         {
             try
             {
@@ -102,7 +105,10 @@ namespace CozyCub.Controllers
                 {
                     return BadRequest();
                 }
-                return Ok(await _orderServices.GetOrderDetails(userId));
+                var token = HttpContext.Request.Headers["Authorization"].FirstOrDefault();
+                var splitToken = token.Split(' ');
+                var jwtToken = splitToken[1];
+                return Ok(await _orderServices.GetOrderDetails(jwtToken));
             }
             catch (Exception e)
             {
@@ -132,11 +138,14 @@ namespace CozyCub.Controllers
         [ProducesResponseType(typeof(object), 200)]
         [ProducesResponseType(401)]
         [ProducesResponseType(500)]
-        public async Task<ActionResult> GetDetailedOrder(int orderId)
+        public async Task<ActionResult> GetDetailedOrder()
         {
             try
             {
-                return Ok(await _orderServices.GetOrderDetails(orderId));
+                var token = HttpContext.Request.Headers["Authorization"].FirstOrDefault();
+                var splitToken = token.Split(' ');
+                var jwtToken = splitToken[1];
+                return Ok(await _orderServices.GetOrderDetails(jwtToken));
             }
             catch (Exception ex)
             {

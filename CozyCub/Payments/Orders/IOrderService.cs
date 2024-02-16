@@ -5,20 +5,21 @@ namespace CozyCub.Payments.Orders
 {
     public interface IOrderService
     {
-        Task<string> CreateOrder(long price);
-        public List<OrderDetailDTO> payment(RazorPayDTO razorPayDTO);
 
-        Task<bool> CreateOrder(int userId, OrderRequestDTO orderRequestDTO);
-
-        Task<List<OrderViewDTO>> GetOrders(int userId);
+        Task<bool> CreateOrder(string token, OrderRequestDTO requestDTO);
 
         Task<decimal> GetTotalRevenue();
 
-        Task<List<OrderViewDTO>> GetOrderDetails(int userId);
+        Task<List<OrderViewDTO>> GetOrderDetails(string token);
 
-        Task<AdminOrderOutputDTO> GetOrderDetailById(int orderId);
+        Task<List<AdminOrderOutputDTO>> GetOrderDetailsForAdmin();
+
+        Task<AdminOrderOutputDTO> GetOrderDetailById(int orderIdF);
 
         Task<bool> UpdateOrder(int orderId, AdminOrderOutputDTO adminOrder);
 
+        //razor pay method 
+        Task<string> RazorPayPayment(long price);
+        public List<OrderDetailDTO> payment(RazorPayDTO razorPayDTO);
     }
 }

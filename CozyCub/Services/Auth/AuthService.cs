@@ -33,22 +33,30 @@ namespace CozyCub.Services.Auth
         /// <returns>JWT token on successful registration, or null if user ID is invalid.</returns>
         public async Task<string> Register(UserRegisterDTO userDTO)
         {
-            if (userDTO == null)
-                throw new ArgumentNullException(nameof(userDTO), "User data cannot be null.");
+            try
+            {
+                if (userDTO == null)
+                    throw new ArgumentNullException(nameof(userDTO), "User data cannot be null.");
 
-            if (userDTO.Id < 0)
-                throw new ArgumentException("Invalid user ID.", nameof(userDTO.Id));
+                if (userDTO.Id < 0)
+                    throw new ArgumentException("Invalid user ID.", nameof(userDTO.Id));
 
-            var existingUser = await _context.Users.FirstOrDefaultAsync(u => u.Email == userDTO.Email);
-            if (existingUser != null)
-                throw new InvalidOperationException("User with the same email already exists.");
+                var existingUser = await _context.Users.FirstOrDefaultAsync(u => u.Email == userDTO.Email);
+                if (existingUser != null)
+                    throw new InvalidOperationException("User with the same email already exists.");
 
-            var userEntity = _mapper.Map<User>(userDTO);
-            userEntity.Password = HashPassword(userDTO.Password);
-            _context.Users.Add(userEntity);
-            await _context.SaveChangesAsync();
+                var userEntity = _mapper.Map<User>(userDTO);
+                userEntity.Password = HashPassword(userDTO.Password);
+                _context.Users.Add(userEntity);
+                await _context.SaveChangesAsync();
 
-            return GenerateJwtToken(userEntity);
+                return "User registered successfully !";
+            }
+            catch (Exception ex)
+            {
+                return $"Failed to register user ,Please try again! {ex.Message}";
+                throw;
+            }
         }
 
         private ClaimsIdentity GetClaimsIdentity(User user)

@@ -14,12 +14,13 @@ namespace CozyCub.Controllers
     public class ProductController : ControllerBase
     {
         private readonly IProductService _productServices;
-        private readonly IWebHostEnvironment _webHostEnvironment;
+
+      
 
         public ProductController(IProductService productServices, IWebHostEnvironment webHostEnvironment)
         {
             _productServices = productServices;
-            _webHostEnvironment = webHostEnvironment;
+          
         }
 
         [HttpGet]
@@ -100,7 +101,7 @@ namespace CozyCub.Controllers
         {
             try
             {
-                await _productServices.AddProduct(productDto, image);
+                await _productServices.CreateProduct(productDto, image);
                 return Ok();
             }
             catch (Exception e)
