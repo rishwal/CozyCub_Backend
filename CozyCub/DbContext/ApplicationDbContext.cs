@@ -105,13 +105,19 @@ namespace CozyCub
             // Default value for User.Role
             modelBuilder.Entity<User>()
                 .Property(u => u.Role)
-                .HasDefaultValue("User");
+                .HasDefaultValue("user");
 
             // Category and Product Relationship
             modelBuilder.Entity<Category>()
                 .HasMany(c => c.Products)
                 .WithOne(p => p.Category)
                 .HasForeignKey(c => c.CategoryId);
+
+            //Product Rating default value is 0
+            modelBuilder.Entity<Product>()
+                           .Property(p => p.Rating)
+                           .HasDefaultValue(0);
+
 
             // WishList and User Relationship
             modelBuilder.Entity<WishList>()

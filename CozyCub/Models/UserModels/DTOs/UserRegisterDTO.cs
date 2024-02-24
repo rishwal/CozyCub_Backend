@@ -4,7 +4,7 @@ namespace CozyCub.Models.UserModels.DTOs
 {
     public class UserRegisterDTO
     {
-        public int Id { get; set; } 
+
         [Required]
         public string UserName { get; set; }
 
@@ -16,6 +16,6 @@ namespace CozyCub.Models.UserModels.DTOs
         [Required]
         public string Password { get; set;} 
 
-        public string Role { get; set;}
+  
     }
 }

@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Hosting;
 using System;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
+using Microsoft.AspNetCore.Mvc.Diagnostics;
 
 namespace CozyCub.Controllers
 {
@@ -15,12 +17,12 @@ namespace CozyCub.Controllers
     {
         private readonly IProductService _productServices;
 
-      
+
 
         public ProductController(IProductService productServices, IWebHostEnvironment webHostEnvironment)
         {
             _productServices = productServices;
-          
+
         }
 
         [HttpGet]
@@ -93,6 +95,45 @@ namespace CozyCub.Controllers
             }
         }
 
+
+        [HttpGet("clothes-by-gender")]
+        [Authorize]
+        [ProducesResponseType(typeof(object), 200)]
+        [ProducesResponseType(401)]
+        [ProducesResponseType(500)]
+        public async Task<IActionResult> GetClothesByGender(char gender)
+        {
+            try
+            {
+                var res = await _productServices.GetClothesByGender(gender);
+                return Ok(res);
+
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+                throw;
+            }
+        }
+
+
+        [HttpGet("product-by-category-name")]
+        [Authorize]
+        [ProducesResponseType(typeof(object), 200)]
+        [ProducesResponseType(401)]
+        [ProducesResponseType(500)]
+        public async Task<ActionResult> GetProductsByCategoryName(string name)
+        {
+            try
+            {
+                return Ok(await _productServices.GetProductByCategoryName(name));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
+
         [HttpPost]
         [Authorize(Roles = "admin")]
         [ProducesResponseType(200)]
@@ -101,8 +142,8 @@ namespace CozyCub.Controllers
         {
             try
             {
-                await _productServices.CreateProduct(productDto, image);
-                return Ok();
+                var res = await _productServices.CreateProduct(productDto, image);
+                return res ? Ok("Product created sucessfully !") : StatusCode(500,"Error while craeting a new product !");
             }
             catch (Exception e)
             {
@@ -118,8 +159,8 @@ namespace CozyCub.Controllers
         {
             try
             {
-                await _productServices.DeleteProduct(id);
-                return Ok();
+                bool res = await _productServices.DeleteProduct(id);
+                return res ? Ok() : StatusCode(500, "An error ocuured while deleting product !");
             }
             catch (Exception e)
             {
@@ -135,8 +176,8 @@ namespace CozyCub.Controllers
         {
             try
             {
-                await _productServices.UpdateProduct(id, productDto, image);
-                return Ok();
+                bool res = await _productServices.UpdateProduct(id, productDto, image);
+                return res ? Ok() : StatusCode(500, "An error ocuured while updating product !");
             }
             catch (Exception e)
             {

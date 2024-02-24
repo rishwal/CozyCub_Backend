@@ -2,10 +2,14 @@
 
 namespace CozyCub.Models.ProductModels.DTOs
 {
-    public class CreateProductDTO
+    public class UpdateProduct
     {
+        public int Id { get; set; }
+
         [Required]
         public string Name { get; set; }
+
+        public string Description { get; set; }
 
         [Required]
         public decimal OfferPrice { get; set; }
@@ -13,16 +17,13 @@ namespace CozyCub.Models.ProductModels.DTOs
         [Required]
         public decimal Price { get; set; }
 
-        [Required]
-        [MaxLength(1000, ErrorMessage = "Product description should'nt be greater than 1000 characters")]
-        public string Description { get; set; }
-
-        [Required]
         public char Gender { get; set; }
 
         [Required]
-        public int CategoryId { get; set; }
+        public string Image { get; set; }
 
+        [Required]
+        public int CategoryId { get; set; }
 
     }
 }

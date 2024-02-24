@@ -8,12 +8,16 @@ namespace CozyCub.Services.ProductService
         Task<ProductOutputDTO> GetProductById(int id);
         Task<List<ProductOutputDTO>> GetProductByCategory(int categoryId);
 
+        Task<List<ProductOutputDTO>> GetProductByCategoryName(string category);
+
         Task<List<ProductOutputDTO>> ProductPagination(int pageNumber = 1, int pageSize = 10);
 
-        Task CreateProduct(CreateProductDTO productDTO, IFormFile image);
+        Task<List<ProductOutputDTO>> GetClothesByGender(char gender);
 
-        Task UpdateProduct(int id, CreateProductDTO productDTO, IFormFile image);
+        Task<bool> CreateProduct(CreateProductDTO productDTO, IFormFile image);
 
-        Task DeleteProduct(int id);
+        Task<bool> UpdateProduct(int id, CreateProductDTO productDTO, IFormFile image);
+
+        Task<bool> DeleteProduct(int id);
     }
 }

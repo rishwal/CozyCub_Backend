@@ -74,8 +74,9 @@ namespace CozyCub.Controllers
                 var token = HttpContext.Request.Headers["Authorization"].FirstOrDefault();
                 var splitToken = token.Split(' ');
                 var jwtToken = splitToken[1];
-                await _cartServices.IncreaseQuantity(jwtToken, productId);
-                return Ok();
+                
+                bool res = await _cartServices.IncreaseQuantity(jwtToken, productId);
+                return res ? Ok() : StatusCode(500, "An error ocuured while incrementing quantity !");
             }
             catch (Exception e)
             {

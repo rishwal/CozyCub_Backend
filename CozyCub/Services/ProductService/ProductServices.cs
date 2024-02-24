@@ -3,6 +3,8 @@ using CozyCub.Models.ProductModels;
 using CozyCub.Models.ProductModels.DTOs;
 using Microsoft.EntityFrameworkCore;
 using Razorpay.Api;
+using System.Reflection.Metadata.Ecma335;
+using System.Runtime.CompilerServices;
 
 namespace CozyCub.Services.ProductService
 {
@@ -35,12 +37,14 @@ namespace CozyCub.Services.ProductService
         }
 
 
+
+
         /// <summary>
         /// Adds a new product.
         /// </summary>
         /// <param name="productDTO">Product data.</param>
         /// <param name="image">Product image file.</param>
-        public async Task CreateProduct(CreateProductDTO productDTO, IFormFile image)
+        public async Task<bool> CreateProduct(CreateProductDTO productDTO, IFormFile image)
         {
             try
             {
@@ -62,6 +66,9 @@ namespace CozyCub.Services.ProductService
 
                     productImage = "/Images/Products/" + filleName;
 
+
+
+
                 }
                 else
                 {
@@ -73,15 +80,16 @@ namespace CozyCub.Services.ProductService
 
                 product.Image = productImage;
 
-
-
                 await _context.Products.AddAsync(product);
                 await _context.SaveChangesAsync();
+
+                return true;
 
 
             }
             catch (Exception ex)
             {
+                return false;
                 throw new Exception("Error adding product: " + ex.Message);
 
             }
@@ -92,18 +100,22 @@ namespace CozyCub.Services.ProductService
         /// Deletes a product by its ID.
         /// </summary>
         /// <param name="id">The ID of the product to delete.</param>
-        public async Task DeleteProduct(int id)
+        public async Task<bool> DeleteProduct(int id)
         {
             try
             {
                 var productToDelete = await _context.Products.FirstOrDefaultAsync(p => p.Id == id);
                 _context.Products.Remove(productToDelete);
                 await _context.SaveChangesAsync();
+
+                return true;
             }
             catch (Exception ex)
             {
+
                 await Console.Out.WriteLineAsync($"An exception occured while removing product with id {id}" + ex.Message);
-                throw;
+
+                return false;
             }
         }
 
@@ -128,6 +140,7 @@ namespace CozyCub.Services.ProductService
                    ProductDescription = p.Description,
                    Price = p.Price,
                    Category = p.Category.Name,
+                   Gender = p.Gender,
                    ProductImage = _hostUrl + p.Image,
 
                }).ToListAsync();
@@ -146,6 +159,37 @@ namespace CozyCub.Services.ProductService
             }
         }
 
+        public async Task<List<ProductOutputDTO>> GetProductByCategoryName(string category)
+        {
+            try
+            {
+                var products = await _context.Products.
+                    Include(p => p.Category)
+                    .Where(c => c.Category.Name == category)
+                    .Select(p => new ProductOutputDTO
+                    {
+                        Id = p.Id,
+                        ProductName = p.Name,
+                        ProductDescription = p.Description,
+                        Price = p.Price,
+                        Gender = p.Gender,
+                        Category = p.Category.Name,
+                        ProductImage = p.Image
+
+                    }).ToListAsync();
+
+                if (products != null)
+                    return products;
+
+                return new List<ProductOutputDTO>();
+            }
+            catch (Exception ex)
+            {
+                await Console.Out.WriteLineAsync("An exception occured while fetchig products with category name " + ex.Message);
+                throw;
+            }
+
+        }
 
 
         /// <summary>
@@ -157,7 +201,7 @@ namespace CozyCub.Services.ProductService
         {
             var prdt = await _context.Products.Include(p => p.Category).FirstOrDefaultAsync(p => p.Id == id);
 
-            if (prdt == null)
+            if (prdt != null)
             {
                 ProductOutputDTO product = new()
                 {
@@ -166,6 +210,7 @@ namespace CozyCub.Services.ProductService
                     ProductName = prdt.Name,
                     ProductDescription = prdt.Description,
                     Price = prdt.Price,
+                    Gender = prdt.Gender,
                     Category = prdt.Category.Name,
                     ProductImage = prdt.Image
 
@@ -178,6 +223,43 @@ namespace CozyCub.Services.ProductService
             return new ProductOutputDTO();
 
 
+        }
+
+        ///<summary>
+        ///The function is for Fetching product by gender  
+        /// </summary>
+        public async Task<List<ProductOutputDTO>> GetClothesByGender(char gender)
+        {
+            try
+            {
+                var clothesByGender = await _context.Products
+                                      .Include(p => p.Category)
+                                      .Where(p => p.CategoryId == 1 && p.Gender == gender)
+                                      .Select(p => new ProductOutputDTO
+                                      {
+                                          Id = p.Id,
+                                          ProductName = p.Name,
+                                          ProductDescription = p.Description,
+                                          Price = p.Price,
+                                          Gender = p.Gender,
+                                          Category = p.Category.Name,
+                                          ProductImage = p.Image
+
+                                      }).ToListAsync();
+
+
+
+                if (clothesByGender.Count > 0)
+                    return clothesByGender;
+                return [];
+
+
+            }
+            catch (Exception ex)
+            {
+                await Console.Out.WriteLineAsync("A");
+                throw;
+            }
         }
 
 
@@ -199,6 +281,7 @@ namespace CozyCub.Services.ProductService
                         ProductDescription = p.Description,
                         Price = p.Price,
                         OfferPrice = p.OfferPrice,
+                        Gender = p.Gender,
                         Category = p.Category.Name,
                         ProductImage = p.Image
                     }).ToList();
@@ -209,7 +292,7 @@ namespace CozyCub.Services.ProductService
             catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
-                throw;
+                throw new Exception($"An Exception has been occuured while fetching clothes with by gender! {ex.Message}");
             }
         }
 
@@ -235,7 +318,9 @@ namespace CozyCub.Services.ProductService
                     ProductName = p.Name,
                     ProductDescription = p.Description,
                     Price = p.Price,
+                    Gender = p.Gender,
                     ProductImage = p.Image,
+
                     Category = p.Category.Name
                 }).ToList();
 
@@ -258,7 +343,7 @@ namespace CozyCub.Services.ProductService
         /// <param name="id">The ID of the product to update.</param>
         /// <param name="productDTO">The updated product data.</param>
         /// <param name="image">The product image file.</param>
-        public async Task UpdateProduct(int id, CreateProductDTO productDTO, IFormFile image)
+        public async Task<bool> UpdateProduct(int id, CreateProductDTO productDTO, IFormFile image)
         {
             try
             {
@@ -269,13 +354,16 @@ namespace CozyCub.Services.ProductService
                     product.Name = productDTO.Name;
                     product.Description = productDTO.Description;
                     product.Price = productDTO.Price;
+                    product.OfferPrice = productDTO.OfferPrice;
+                    product.Gender = productDTO.Gender;
+                    product.CategoryId = productDTO.CategoryId;
 
 
                     if (image != null && image.Length > 0)
                     {
 
                         string fileName = Guid.NewGuid().ToString() + Path.GetExtension(image.FileName);
-                        string filePath = Path.Combine(_webHostEnvironment.WebRootPath, "Uploads", "Product", fileName);
+                        string filePath = Path.Combine(_webHostEnvironment.WebRootPath, "Images", "Products", fileName);
 
                         using (var stream = new FileStream(filePath, FileMode.Create))
                         {
@@ -283,26 +371,31 @@ namespace CozyCub.Services.ProductService
                         }
 
 
-                        product.Image = "/Uploads/Product/" + fileName;
+                        product.Image = "/Images/Products/" + fileName;
                     }
                     else
                     {
-                        product.Image = "/Uploads/common/noimage.png";
+                        product.Image = "Images/Products/PlaceholderImg/placeholder.jpg";
                     }
 
 
                     await _context.SaveChangesAsync();
+
+                    return true;
                 }
                 else
                 {
+                    return false;
                     throw new InvalidOperationException($"Product with ID {id} not found.");
                 }
             }
             catch (Exception ex)
             {
-
+                return false;
                 throw new Exception($"Error updating product with ID {id}: {ex.Message}", ex);
             }
         }
+
+
     }
 }

@@ -41,12 +41,14 @@ namespace CozyCub.Services.CartServices
                     .Include(c => c.CartItems)
                     .ThenInclude(ci => ci.product)
                     .FirstOrDefaultAsync(p => p.UserId == userId);
-
+                if (user == null)
+                {
+                    return [];
+                }
 
                 if (user != null)
                 {
                     var cartItems = user.CartItems.Select(ci => new OutputCartDTO
-
                     {
                         Id = ci.ProductId,
                         ProductName = ci.product.Name,
@@ -101,17 +103,19 @@ namespace CozyCub.Services.CartServices
                             CartItems = new List<CartItem>()
                         };
 
+                        _context.Cart.Add(user.Cart);
+                        await _context.SaveChangesAsync();
+
                     }
 
-                    _context.Cart.Add(user.Cart);
-                    await _context.SaveChangesAsync();
+
                 }
 
-                CartItem? existingCart = user.Cart.CartItems.FirstOrDefault(ci => ci.ProductId == productId);
+                CartItem? existingCartProduct = user.Cart.CartItems.FirstOrDefault(ci => ci.ProductId == productId);
 
-                if (existingCart != null)
+                if (existingCartProduct != null)
                 {
-                    existingCart.Quantity++;
+                    existingCartProduct.Quantity++;
                 }
                 else
                 {
@@ -128,13 +132,14 @@ namespace CozyCub.Services.CartServices
 
                 await _context.SaveChangesAsync();
 
-                return false;
+                return true;
             }
             catch (Exception ex)
             {
                 // Log the exception
-                Console.WriteLine($"Error adding product to cart: {ex.Message}");
-                throw;
+                Console.WriteLine($"Error adding product to cart: {ex}");
+                return false;
+
             }
         }
 
@@ -147,15 +152,13 @@ namespace CozyCub.Services.CartServices
             try
             {
                 int userId = _jwtservice.GetUserIdFromToken(token);
-                if (userId == 0)
-                {
-                    throw new Exception("User id is not valid !");
-                }
+
+                if (userId == 0) throw new Exception("User id is not valid !");
 
                 var user = await _context.Users
                     .Include(u => u.Cart)
                     .ThenInclude(u => u.CartItems)
-                    .FirstOrDefaultAsync(c => c.Id == userId);
+                    .FirstOrDefaultAsync(u => u.Id == userId);
 
                 var product = await _context.Products.FirstOrDefaultAsync(p => p.Id == ProductId);
 
@@ -174,12 +177,13 @@ namespace CozyCub.Services.CartServices
 
                 return false;
                 throw new Exception($"No User or Product presnt with given id , ProductId:{ProductId} !");
-
+               
             }
             catch (Exception ex)
             {
                 return false;
                 throw new Exception("An exception occured while deleting a product from the users cart " + ex.Message);
+                await Console.Out.WriteLineAsync(ex.Message);
             }
         }
 
@@ -223,7 +227,7 @@ namespace CozyCub.Services.CartServices
             catch (Exception ex)
             {
                 throw new Exception("An exception occured while increasing the quantity of the product" + ex.Message);
-         
+
             }
         }
 
@@ -243,17 +247,17 @@ namespace CozyCub.Services.CartServices
                     .Include(u => u.Cart)
                     .ThenInclude(c => c.CartItems)
                     .FirstOrDefaultAsync(u => u.Id == userId);
-                var product = await _context.Products.FirstOrDefaultAsync(p=>p.Id==productId);
+                var product = await _context.Products.FirstOrDefaultAsync(p => p.Id == productId);
 
                 if (user != null && product != null)
                 {
-                    var item = user.Cart.CartItems.FirstOrDefault(ci=>ci.ProductId == productId);
+                    var item = user.Cart.CartItems.FirstOrDefault(ci => ci.ProductId == productId);
 
-                    if(item != null)
+                    if (item != null)
                     {
                         item.Quantity = item.Quantity >= 1 ? item.Quantity - 1 : item.Quantity;
 
-                        if(item.Quantity == 0)
+                        if (item.Quantity == 0)
                         {
                             _context.CartItems.Remove(item);
                             await _context.SaveChangesAsync();
@@ -264,21 +268,21 @@ namespace CozyCub.Services.CartServices
 
                 }
 
-                if(user !=null )
+                if (user != null)
 
 
-                if (user != null && product != null)
-                {
-                    var item = user.Cart.CartItems.FirstOrDefault(ci => ci.ProductId == productId);
-                    if (item != null)
+                    if (user != null && product != null)
                     {
-                        item.Quantity--;
-                        await _context.SaveChangesAsync();
+                        var item = user.Cart.CartItems.FirstOrDefault(ci => ci.ProductId == productId);
+                        if (item != null)
+                        {
+                            item.Quantity--;
+                            await _context.SaveChangesAsync();
 
 
-                        return true;
+                            return true;
+                        }
                     }
-                }
 
                 return false;
             }

@@ -25,7 +25,7 @@ namespace CozyCub.Mappings
             CreateMap<User, UserRegisterDTO>().ReverseMap();
 
             // Product to ProductDTO and vice versa mapping
-            CreateMap<Product, ProductDTO>().ReverseMap();
+            CreateMap<Product, UpdateProduct>().ReverseMap();
 
             CreateMap<Product , CreateProductDTO>().ReverseMap();   
 

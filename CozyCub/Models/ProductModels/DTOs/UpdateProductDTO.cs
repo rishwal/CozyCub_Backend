@@ -2,26 +2,24 @@
 
 namespace CozyCub.Models.ProductModels.DTOs
 {
-    public class ProductDTO
+    public class UpdateProductDTO
     {
-        public int Id { get; set; }
-
-        [Required]
-        public string Name { get; set; }
+        public string ProductName { get; set; }
 
         public string Description { get; set; }
 
-        [Required]
+       
         public decimal OfferPrice { get; set; }
-
-        [Required]
+            
         public decimal Price { get; set; }
 
-        [Required]
-        public string ImageData { get; set; }
+        public char Gender { get; set; }
+
+        public string Image { get; set; }
 
         [Required]
         public int CategoryId { get; set; }
+
 
     }
 }

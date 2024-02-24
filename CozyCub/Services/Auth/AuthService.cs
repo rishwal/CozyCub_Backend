@@ -6,6 +6,9 @@ using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
 using CozyCub.Helpers;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using System.IdentityModel.Tokens.Jwt;
 
 namespace CozyCub.Services.Auth
 {
@@ -38,8 +41,6 @@ namespace CozyCub.Services.Auth
                 if (userDTO == null)
                     throw new ArgumentNullException(nameof(userDTO), "User data cannot be null.");
 
-                if (userDTO.Id < 0)
-                    throw new ArgumentException("Invalid user ID.", nameof(userDTO.Id));
 
                 var existingUser = await _context.Users.FirstOrDefaultAsync(u => u.Email == userDTO.Email);
                 if (existingUser != null)
@@ -111,14 +112,24 @@ namespace CozyCub.Services.Auth
         /// <returns>Generated JWT token.</returns>
         private string GenerateJwtToken(User user)
         {
-            var claimIdentity = GetClaimsIdentity(user);
-            var token = JwtHelper.GenerateJwtToken(
-                _configuration["Jwt:SecretKey"],
-                _configuration["Jwt:Issuer"],
-                _configuration["Jwt:Audience"],
-                claimIdentity);
+            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:SecretKey"]));
+            var credentails = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
 
-            return token;
+            var claims = new[]
+            {
+                new Claim(ClaimTypes.NameIdentifier ,user.Id.ToString()),
+                new Claim(ClaimTypes.Name,user.UserName ),
+                new Claim(ClaimTypes.Role,user.Role),
+                new Claim(ClaimTypes.Email,user.Email),
+            };
+
+            var token = new JwtSecurityToken(
+                    claims: claims,
+                    signingCredentials: credentails,
+                    expires: DateTime.UtcNow.AddHours(2)
+                );
+
+            return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
         // Other private methods...

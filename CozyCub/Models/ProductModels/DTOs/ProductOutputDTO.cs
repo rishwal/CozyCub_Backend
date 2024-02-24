@@ -12,6 +12,8 @@
         public string Category { get; set; }
 
         public decimal Price { get; set; }
+            
+        public char Gender { get; set; }
 
         public decimal OfferPrice { get; set; }
 

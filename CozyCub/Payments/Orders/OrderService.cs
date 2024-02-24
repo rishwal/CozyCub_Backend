@@ -98,6 +98,8 @@ namespace CozyCub.Payments.Orders
                     return false;
                 }
 
+                var cart = await _context.Cart.Include(c => c.CartItems).ThenInclude(ci => ci.product).FirstOrDefaultAsync(u => u.UserId == userId);
+
                 var order = new Models.Orders.Order
                 {
                     UserId = userId,
@@ -110,16 +112,17 @@ namespace CozyCub.Payments.Orders
                     OrderStatus = orderRequestDTO.OrderStatus,
                     OrderString = orderRequestDTO.OrderString,
                     TransactionId = orderRequestDTO.TransactionId,
-                    OrderItems = orderRequestDTO.OutPutCarts.Select(oc => new OrderedItem
+                    OrderItems = cart.CartItems.Select(oc => new OrderedItem
                     {
                         ProductId = oc.ProductId,
                         Quantity = oc.Quantity,
-                        TotalPrice = oc.Quantity * oc.Price
+                        TotalPrice = oc.Quantity * oc.product.Price
 
                     }).ToList()
                 };
 
                 _context.Orders.Add(order);
+                _context.Cart.Remove(cart);
                 await _context.SaveChangesAsync();
                 return true;
 

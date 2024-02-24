@@ -41,12 +41,12 @@ namespace CozyCub.Services.JWT_Id
                 var userIdClaim = jwtToken.Claims.FirstOrDefault(claim => claim.Type == ClaimTypes.NameIdentifier);
 
 
-                if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out var userId))
+                if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out var Id))
                 {
                     throw new SecurityTokenException("Invalid or missing user Id claim.");
                 }
 
-                return userId;
+                return Id;
 
             }
             catch (Exception ex)

@@ -25,8 +25,8 @@ namespace CozyCub.Models.ProductModels
         [Url(ErrorMessage = "Invalid URL format.")]
         public string Image { get; set; }
 
-        [Range(0, int.MaxValue, ErrorMessage = "Quantity must be greater than or equal to 0.")]
-        public int Qty { get; set; }
+        // 1=male , 2=female
+        public char Gender { get; set; }
 
         [Range(0, 5, ErrorMessage = "Rating must be between 0 and 5.")]
         public int Rating { get; set; }
