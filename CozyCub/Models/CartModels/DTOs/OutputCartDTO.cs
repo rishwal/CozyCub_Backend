@@ -11,7 +11,9 @@ namespace CozyCub.Models.CartModels.DTOs
         public string ProductName { get; set; }
 
         [DisplayName("Price")]
-        public decimal Price { get; set; }
+        public decimal Price { get; set; }  
+
+        public decimal OfferPrice { get; set; }         
 
         [DisplayName("Image URL")]
         public string Image { get; set; }

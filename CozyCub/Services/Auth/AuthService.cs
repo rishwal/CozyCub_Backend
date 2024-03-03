@@ -46,8 +46,12 @@ namespace CozyCub.Services.Auth
                 if (existingUser != null)
                     throw new InvalidOperationException("User with the same email already exists.");
 
+
+                string salt = BCrypt.Net.BCrypt.GenerateSalt();
+                string hashPassword = BCrypt.Net.BCrypt.HashPassword(userDTO.Password, salt);
+
                 var userEntity = _mapper.Map<User>(userDTO);
-                userEntity.Password = HashPassword(userDTO.Password);
+                userEntity.Password = HashPassword(userDTO.Password, salt);
                 _context.Users.Add(userEntity);
                 await _context.SaveChangesAsync();
 
@@ -71,9 +75,9 @@ namespace CozyCub.Services.Auth
             };
 
             //if (user.Roles != null && user.Roles.Any())
-            //{
+            {
             //    claims.AddRange(user.Roles.Select(role => new Claim(C)));
-            //}
+            }
 
             return new ClaimsIdentity(claims, "custom");
 
@@ -138,9 +142,8 @@ namespace CozyCub.Services.Auth
 
 
         //Function to hash the user password.
-        public string HashPassword(string password)
+        public string HashPassword(string password,string salt)
         {
-            string salt = BCrypt.Net.BCrypt.GenerateSalt();
             return BCrypt.Net.BCrypt.HashPassword(password, salt);
         }
 

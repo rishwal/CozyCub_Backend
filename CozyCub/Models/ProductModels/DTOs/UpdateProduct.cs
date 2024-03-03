@@ -19,6 +19,8 @@ namespace CozyCub.Models.ProductModels.DTOs
 
         public char Gender { get; set; }
 
+        public int Qty { get; set; }
+
         [Required]
         public string Image { get; set; }
 

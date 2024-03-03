@@ -25,22 +25,24 @@ namespace CozyCub.Models.ProductModels
         [Url(ErrorMessage = "Invalid URL format.")]
         public string Image { get; set; }
 
-        // 1=male , 2=female
-        public char Gender { get; set; }
+        public int Quantity { get; set; }
 
-        [Range(0, 5, ErrorMessage = "Rating must be between 0 and 5.")]
-        public int Rating { get; set; }
+    // 1=male , 2=female
+    public char Gender { get; set; }
 
-        [Required(ErrorMessage = "Category ID is required.")]
-        public int CategoryId { get; set; }
+    [Range(0, 5, ErrorMessage = "Rating must be between 0 and 5.")]
+    public int Rating { get; set; }
+
+    [Required(ErrorMessage = "Category ID is required.")]
+    public int CategoryId { get; set; }
 
 
 
 
-        // Navigation property to represent the category associated with this product
-        public virtual Category Category { get; set; }
+    // Navigation property to represent the category associated with this product
+    public virtual Category Category { get; set; }
 
-        // Navigation property to represent the cart items associated with this product
-        public virtual List<CartItem> CartItems { get; set; }
-    }
+    // Navigation property to represent the cart items associated with this product
+    public virtual List<CartItem> CartItems { get; set; }
+}
 }

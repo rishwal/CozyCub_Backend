@@ -33,7 +33,7 @@ namespace CozyCub.Mappings
             CreateMap<Category, CategoryDTO>().ReverseMap();
 
             // UserDTO to User and vice versa mapping
-            CreateMap<UserDTO, User>().ReverseMap();
+            CreateMap<OutPutUser, User>().ReverseMap();
 
             // Category to CategoryCreateDTO and vice versa mapping
             CreateMap<Category, CategoryCreateDTO>().ReverseMap();

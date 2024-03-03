@@ -127,7 +127,7 @@ namespace CozyCub.Services.WishList_Services
         /// </summary>
         /// <param name="productId">The ID of the product to remove from the wishlist.</param>
         /// <returns>True if the product was successfully removed from the wishlist; otherwise, false.</returns>
-        public async Task<bool> RemoveWishList(int productId)
+        public async Task<bool> RemoveFromWishList(int productId)
         {
             try
             {

@@ -14,97 +14,114 @@ namespace CozyCub.Controllers
     {
         private readonly IOrderService _orderServices;
 
+        // Constructor to initialize dependencies
         public OrderController(IOrderService orderServices)
         {
             _orderServices = orderServices;
         }
 
+        // Create an order with RazorPay payment
         [HttpPost("razor-payment")]
-        [Authorize]
-        [ProducesResponseType(typeof(long), 200)]
-        [ProducesResponseType(typeof(string), 400)]
-        [ProducesResponseType(401)]
-        [ProducesResponseType(500)]
+        [Authorize] // Requires authentication
+        [ProducesResponseType(typeof(long), 200)] // Successful response
+        [ProducesResponseType(typeof(string), 400)] // Bad request response
+        [ProducesResponseType(401)] // Unauthorized response
+        [ProducesResponseType(500)] // Server error response
         public async Task<ActionResult> CreateOrder(long price)
         {
             try
             {
-                if (price <= 0 || price > 100000 )
+                // Check if price is valid
+                if (price <= 0 || price > 100000)
                 {
                     return BadRequest("Enter a valid amount!");
                 }
+                // Create order with RazorPay payment
                 var orderId = await _orderServices.RazorPayPayment(price);
                 return Ok(orderId);
             }
             catch (Exception ex)
             {
+                // Return server error if an exception occurs
                 return StatusCode(500, ex.Message);
             }
         }
 
+        // Payment endpoint
         [HttpPost("payment")]
-        [Authorize]
-        [ProducesResponseType(typeof(object), 200)]
-        [ProducesResponseType(typeof(string), 400)]
-        [ProducesResponseType(401)]
-        [ProducesResponseType(500)]
+        [Authorize] // Requires authentication
+        [ProducesResponseType(typeof(object), 200)] // Successful response
+        [ProducesResponseType(typeof(string), 400)] // Bad request response
+        [ProducesResponseType(401)] // Unauthorized response
+        [ProducesResponseType(500)] // Server error response
         public ActionResult Payment(RazorPayDTO razorpay)
         {
             try
             {
+                // Check if razorpay details are provided
                 if (razorpay == null)
                 {
                     return BadRequest("Razorpay details must not be null here");
                 }
+                // Process payment
                 var con = _orderServices.payment(razorpay);
                 return Ok(con);
             }
             catch (Exception e)
             {
+                // Return server error if an exception occurs
                 return StatusCode(500, e.Message);
             }
         }
 
+        // Place an order
         [HttpPost("place-Order")]
-        [Authorize]
-        [ProducesResponseType(200)]
-        [ProducesResponseType(400)]
-        [ProducesResponseType(401)]
-        [ProducesResponseType(500)]
+        [Authorize] // Requires authentication
+        [ProducesResponseType(200)] // Successful response
+        [ProducesResponseType(400)] // Bad request response
+        [ProducesResponseType(401)] // Unauthorized response
+        [ProducesResponseType(500)] // Server error response
         public async Task<ActionResult> PlaceOrder(int userId, OrderRequestDTO orderRequests)
         {
             try
             {
+                // Check if orderRequests and userId are valid
                 if (orderRequests == null || userId <= 0)
                 {
                     return BadRequest();
                 }
+                // Get JWT token from request header
                 var token = HttpContext.Request.Headers["Authorization"].FirstOrDefault();
                 var splitToken = token.Split(' ');
                 var jwtToken = splitToken[1];
+                // Create order
                 await _orderServices.CreateOrder(jwtToken, orderRequests);
                 return Ok();
             }
             catch (Exception e)
             {
+                // Return server error if an exception occurs
                 return StatusCode(500, e.Message);
             }
         }
 
+        // Get order details as an admin
         [HttpGet("get-order-details-as-admin")]
-        [Authorize(Roles = "admin")]
-        [ProducesResponseType(typeof(object), 200)]
-        [ProducesResponseType(400)]
-        [ProducesResponseType(401)]
-        [ProducesResponseType(500)]
+        [Authorize(Roles = "admin")] // Requires admin role
+        [ProducesResponseType(typeof(object), 200)] // Successful response
+        [ProducesResponseType(400)] // Bad request response
+        [ProducesResponseType(401)] // Unauthorized response
+        [ProducesResponseType(500)] // Server error response
         public async Task<ActionResult> GetOrderDetailsAsAdmin(int userId)
         {
             try
             {
+                // Check if userId is valid
                 if (userId <= 0)
                 {
                     return BadRequest();
                 }
+                // Get JWT token from request header
                 var token = HttpContext.Request.Headers["Authorization"].FirstOrDefault();
                 var splitToken = token.Split(' ');
                 var jwtToken = splitToken[1];
@@ -112,36 +129,42 @@ namespace CozyCub.Controllers
             }
             catch (Exception e)
             {
+                // Return server error if an exception occurs
                 return StatusCode(500, e.Message);
             }
         }
 
+        // Get total revenue
         [HttpGet("total_revenue")]
-        [Authorize(Roles = "admin")]
-        [ProducesResponseType(typeof(object), 200)]
-        [ProducesResponseType(401)]
-        [ProducesResponseType(500)]
+        [Authorize(Roles = "admin")] // Requires admin role
+        [ProducesResponseType(typeof(object), 200)] // Successful response
+        [ProducesResponseType(401)] // Unauthorized response
+        [ProducesResponseType(500)] // Server error response
         public async Task<ActionResult> GetTotalRevenue()
         {
             try
             {
+                // Get total revenue
                 return Ok(await _orderServices.GetTotalRevenue());
             }
             catch (Exception e)
             {
+                // Return server error if an exception occurs
                 return StatusCode(500, e.Message);
             }
         }
 
+        // Get detailed order as an admin
         [HttpGet("get-detailed-order")]
-        [Authorize(Roles = "admin")]
-        [ProducesResponseType(typeof(object), 200)]
-        [ProducesResponseType(401)]
-        [ProducesResponseType(500)]
+        [Authorize(Roles = "admin")] // Requires admin role
+        [ProducesResponseType(typeof(object), 200)] // Successful response
+        [ProducesResponseType(401)] // Unauthorized response
+        [ProducesResponseType(500)] // Server error response
         public async Task<ActionResult> GetDetailedOrder()
         {
             try
             {
+                // Get JWT token from request header
                 var token = HttpContext.Request.Headers["Authorization"].FirstOrDefault();
                 var splitToken = token.Split(' ');
                 var jwtToken = splitToken[1];
@@ -149,24 +172,28 @@ namespace CozyCub.Controllers
             }
             catch (Exception ex)
             {
+                // Return server error if an exception occurs
                 return StatusCode(500, ex.Message);
             }
         }
 
+        // Update order status as an admin
         [HttpPut("update-order-status")]
-        [Authorize(Roles = "admin")]
-        [ProducesResponseType(200)]
-        [ProducesResponseType(401)]
-        [ProducesResponseType(500)]
+        [Authorize(Roles = "admin")] // Requires admin role
+        [ProducesResponseType(200)] // Successful response
+        [ProducesResponseType(401)] // Unauthorized response
+        [ProducesResponseType(500)] // Server error response
         public async Task<ActionResult> UpdateOrder(int orderId, [FromBody] AdminOrderOutputDTO orderAdminView)
         {
             try
             {
+                // Update order status
                 await _orderServices.UpdateOrder(orderId, orderAdminView);
                 return Ok();
             }
             catch (Exception ex)
             {
+                // Return server error if an exception occurs
                 return StatusCode(500, ex.Message);
             }
         }

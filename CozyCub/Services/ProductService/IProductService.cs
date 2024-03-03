@@ -16,8 +16,8 @@ namespace CozyCub.Services.ProductService
 
         Task<bool> CreateProduct(CreateProductDTO productDTO, IFormFile image);
 
-        Task<bool> UpdateProduct(int id, CreateProductDTO productDTO, IFormFile image);
+        Task<bool> UpdateProduct(int id,CreateProductDTO productDTO, IFormFile image);
 
-        Task<bool> DeleteProduct(int id);
+        Task<bool> DeleteProduct(int productId);
     }
 }

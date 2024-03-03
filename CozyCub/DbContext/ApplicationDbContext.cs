@@ -107,6 +107,11 @@ namespace CozyCub
                 .Property(u => u.Role)
                 .HasDefaultValue("user");
 
+            //Setting thw quantty to default value 1
+            modelBuilder.Entity<Product>()
+                .Property(p => p.Quantity)
+                .HasDefaultValue(1);
+
             // Category and Product Relationship
             modelBuilder.Entity<Category>()
                 .HasMany(c => c.Products)

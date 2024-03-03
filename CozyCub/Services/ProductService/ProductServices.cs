@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using CozyCub.JWT_Id;
 using CozyCub.Models.ProductModels;
 using CozyCub.Models.ProductModels.DTOs;
 using Microsoft.EntityFrameworkCore;
@@ -18,7 +19,7 @@ namespace CozyCub.Services.ProductService
         private readonly IMapper _mapper;
         private readonly IWebHostEnvironment _webHostEnvironment;
         private readonly string? _hostUrl;
-
+        private readonly IJwtService _jwtServices;
 
         /// <summary>
         /// Constructor for ProductServices.
@@ -102,10 +103,11 @@ namespace CozyCub.Services.ProductService
         /// <param name="id">The ID of the product to delete.</param>
         public async Task<bool> DeleteProduct(int id)
         {
+
             try
             {
-                var productToDelete = await _context.Products.FirstOrDefaultAsync(p => p.Id == id);
-                _context.Products.Remove(productToDelete);
+                var prd = await _context.Products.FirstOrDefaultAsync(p => p.Id == id);
+                _context.Products.Remove(prd);
                 await _context.SaveChangesAsync();
 
                 return true;
@@ -139,6 +141,7 @@ namespace CozyCub.Services.ProductService
                    ProductName = p.Name,
                    ProductDescription = p.Description,
                    Price = p.Price,
+                   Quantity = p.Quantity,   
                    Category = p.Category.Name,
                    Gender = p.Gender,
                    ProductImage = _hostUrl + p.Image,
@@ -171,10 +174,12 @@ namespace CozyCub.Services.ProductService
                         Id = p.Id,
                         ProductName = p.Name,
                         ProductDescription = p.Description,
+                        OfferPrice = p.OfferPrice,
                         Price = p.Price,
+                        Quantity = p.Quantity,  
                         Gender = p.Gender,
                         Category = p.Category.Name,
-                        ProductImage = p.Image
+                        ProductImage = _hostUrl + p.Image,
 
                     }).ToListAsync();
 
@@ -210,9 +215,11 @@ namespace CozyCub.Services.ProductService
                     ProductName = prdt.Name,
                     ProductDescription = prdt.Description,
                     Price = prdt.Price,
+                    OfferPrice = prdt.OfferPrice,
                     Gender = prdt.Gender,
+                    Quantity = prdt.Quantity,
                     Category = prdt.Category.Name,
-                    ProductImage = prdt.Image
+                    ProductImage = _hostUrl + prdt.Image
 
                 };
 
@@ -242,6 +249,7 @@ namespace CozyCub.Services.ProductService
                                           ProductDescription = p.Description,
                                           Price = p.Price,
                                           Gender = p.Gender,
+                                          Quantity = p.Quantity,
                                           Category = p.Category.Name,
                                           ProductImage = p.Image
 
@@ -282,8 +290,10 @@ namespace CozyCub.Services.ProductService
                         Price = p.Price,
                         OfferPrice = p.OfferPrice,
                         Gender = p.Gender,
+                        Quantity = p.Quantity,
                         Category = p.Category.Name,
-                        ProductImage = p.Image
+                        ProductImage = _hostUrl + p.Image
+
                     }).ToList();
                     return productWithCategory;
                 }
@@ -332,9 +342,6 @@ namespace CozyCub.Services.ProductService
                 throw;
             }
         }
-
-
-
 
 
         /// <summary>

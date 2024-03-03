@@ -20,6 +20,8 @@ namespace CozyCub.Payments.Orders
 
         //razor pay method 
         Task<string> RazorPayPayment(long price);
-        public List<OrderDetailDTO> payment(RazorPayDTO razorPayDTO);
+        public bool payment(RazorPayDTO razorPayDTO);
+
+        
     }
 }

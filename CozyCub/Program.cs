@@ -1,7 +1,6 @@
 using CozyCub;
 using CozyCub.JWT_Id;
 using CozyCub.Mappings;
-using CozyCub.Models.Wishlist;
 using CozyCub.Payments.Orders;
 using CozyCub.Services.Auth;
 using CozyCub.Services.CartServices;
@@ -12,7 +11,6 @@ using CozyCub.Services.UserServices;
 using CozyCub.Services.WishList;
 using CozyCub.Services.WishList_Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 
@@ -86,7 +84,6 @@ builder.Services.AddCors(options =>
     });
 });
 
-//builder.Services.AddScoped<ICartServices,CartServices>();
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();

@@ -54,6 +54,7 @@ namespace CozyCub.Services.CartServices
                         ProductName = ci.product.Name,
                         Quantity = ci.Quantity,
                         Price = ci.product.Price,
+                        OfferPrice = ci.product.OfferPrice,
                         TotalPrice = ci.product.Price * ci.Quantity,
                         Image = _hostUrl + ci.product.Image
 
@@ -183,7 +184,7 @@ namespace CozyCub.Services.CartServices
             {
                 return false;
                 throw new Exception("An exception occured while deleting a product from the users cart " + ex.Message);
-                await Console.Out.WriteLineAsync(ex.Message);
+             
             }
         }
 
