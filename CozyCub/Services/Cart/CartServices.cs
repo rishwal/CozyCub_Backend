@@ -196,7 +196,7 @@ namespace CozyCub.Services.CartServices
         {
             try
             {
-                int userId = _jwtservice.GetUserIdFromToken(token);
+                int userId =  _jwtservice.GetUserIdFromToken(token);
 
                 if (userId == 0)
                     throw new Exception("A user with the current token is not found !");

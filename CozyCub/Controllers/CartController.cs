@@ -71,6 +71,7 @@ namespace CozyCub.Controllers
 
         // Increment quantity of a product in the cart
         [HttpPut("increment-quantity")]
+        [Authorize] // Requires authentication
         [ProducesResponseType(200)] // Successful response
         [ProducesResponseType(500)] // Server error response
         public async Task<IActionResult> IncrementQuantity(int productId)
@@ -95,6 +96,7 @@ namespace CozyCub.Controllers
 
         // Decrement quantity of a product in the cart
         [HttpPut("decrement-quantity")]
+        [Authorize] // Requires authentication
         [ProducesResponseType(200)] // Successful response
         [ProducesResponseType(500)] // Server error response
         public async Task<IActionResult> DecrementQuantity(int productId)
@@ -120,6 +122,7 @@ namespace CozyCub.Controllers
 
         // Remove a product from the cart
         [HttpDelete("remove-item-from-cart")]
+        [Authorize] // Requires authentication
         [ProducesResponseType(typeof(bool), 200)] // Successful response
         [ProducesResponseType(500)] // Server error response
         public async Task<ActionResult> RemoveCartItem(int productId)

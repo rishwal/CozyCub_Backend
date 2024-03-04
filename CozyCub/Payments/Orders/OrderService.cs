@@ -42,34 +42,34 @@ namespace CozyCub.Payments.Orders
         /// </summary>
         /// <param name="price">The price of the order.</param>
         /// <returns>The ID of the created order.</returns>
-        public Task<string> RazorPayPayment(long price)
+        public async Task<string> RazorPayPayment(long price)
         {
             try
             {
                 Dictionary<string, object> input = [];
-                Guid transactionid = Guid.NewGuid();
+                Random random = new();
+                string TrasactionId = random.Next(0, 1000).ToString();
+                input.Add("amount", Convert.ToDecimal(price) * 100);
+                input.Add("currency", "INR");
+                input.Add("receipt", TrasactionId);
 
-                string TransactionId = transactionid.ToString();
-                input.Add("Amount", Convert.ToDecimal(price) * 100);
-                input.Add("Currency", "INR");
-                input.Add("Receipt", TransactionId);
+                string key = _configuration["Razorpay:KeyId"];
+                string secret = _configuration["Razorpay:KeySecret"];
 
-                string? Key = _configuration["RazorPay:KeyId"];
-                string? secret = _configuration["RazorPay:KeySecret"];
-
-                RazorpayClient client = new(Key, secret);
+                RazorpayClient client = new RazorpayClient(key, secret);
 
                 Razorpay.Api.Order order = client.Order.Create(input);
-                var orderId = order["id"].ToString();
+                var OrderId = order["id"].ToString();
 
-                return orderId;
+                return await Task.FromResult(OrderId);
+
 
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);
                 return null;
-                throw;
+                throw new Exception("An Exception occured while performing the order in RazorPya :" + ex.Message);
+
             }
         }
 
@@ -107,7 +107,6 @@ namespace CozyCub.Payments.Orders
                     CustomerPhone = orderRequestDTO.CustomerPhone,
                     CustomerCity = orderRequestDTO.CustomerCity,
                     Address = orderRequestDTO.HomeAddress,
-                    OrderStatus = orderRequestDTO.OrderStatus,
                     OrderString = orderRequestDTO.OrderString,
                     TransactionId = orderRequestDTO.TransactionId,
                     OrderItems = cart.CartItems.Select(oc => new OrderedItem
@@ -127,9 +126,8 @@ namespace CozyCub.Payments.Orders
             }
             catch (Exception ex)
             {
-                await Console.Out.WriteLineAsync(ex.Message);
                 return false;
-                throw;
+                throw new Exception("An exception ocuured while placing the oredr :" + ex.Message);
 
             }
         }

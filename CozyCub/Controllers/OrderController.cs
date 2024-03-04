@@ -81,12 +81,12 @@ namespace CozyCub.Controllers
         [ProducesResponseType(400)] // Bad request response
         [ProducesResponseType(401)] // Unauthorized response
         [ProducesResponseType(500)] // Server error response
-        public async Task<ActionResult> PlaceOrder(int userId, OrderRequestDTO orderRequests)
+        public async Task<ActionResult> PlaceOrder(OrderRequestDTO orderRequest)
         {
             try
             {
                 // Check if orderRequests and userId are valid
-                if (orderRequests == null || userId <= 0)
+                if (orderRequest == null)
                 {
                     return BadRequest();
                 }
@@ -95,8 +95,12 @@ namespace CozyCub.Controllers
                 var splitToken = token.Split(' ');
                 var jwtToken = splitToken[1];
                 // Create order
-                await _orderServices.CreateOrder(jwtToken, orderRequests);
-                return Ok();
+                if (orderRequest == null || jwtToken == null)
+                {
+                    return BadRequest();
+                }
+                var status = await _orderServices.CreateOrder(jwtToken, orderRequest);
+                return Ok(status);
             }
             catch (Exception e)
             {
@@ -121,11 +125,7 @@ namespace CozyCub.Controllers
                 {
                     return BadRequest();
                 }
-                // Get JWT token from request header
-                var token = HttpContext.Request.Headers["Authorization"].FirstOrDefault();
-                var splitToken = token.Split(' ');
-                var jwtToken = splitToken[1];
-                return Ok(await _orderServices.GetOrderDetails(jwtToken));
+                return Ok(await _orderServices.GetOrderDetailsForAdmin());
             }
             catch (Exception e)
             {
